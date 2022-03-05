@@ -1,1 +1,15 @@
 // TODO
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--title);
+    font-weight: bold;
+  }
+}
