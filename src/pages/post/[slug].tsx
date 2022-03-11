@@ -5,6 +5,7 @@ import Prismic from '@prismicio/client';
 import { FiCalendar, FiUser } from 'react-icons/fi';
 import { MdOutlineWatchLater } from 'react-icons/md';
 
+import Image from 'next/image';
 import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
@@ -45,40 +46,49 @@ export default function Post({ post }: PostProps): JSX.Element {
   );
 
   return (
-    <main className={`${commonStyles.container} ${styles.container}`}>
-      <div className={styles.header}>
-        <h1>{post.data.title}</h1>
+    <main className={`${styles.container}`}>
+      <Image
+        src={post.data.banner.url}
+        alt="banner"
+        width="1440"
+        height="400"
+        layout="responsive"
+      />
+      <div className={styles.wrapper}>
+        <div className={styles.header}>
+          <h1>{post.data.title}</h1>
 
-        <div className={styles.footer}>
-          <div>
-            <FiCalendar />
-            <span>{post.first_publication_date}</span>
-          </div>
-          <div>
-            <FiUser />
-            <span>{post.data.author}</span>
-          </div>
+          <div className={styles.footer}>
+            <div>
+              <FiCalendar />
+              <span>{post.first_publication_date}</span>
+            </div>
+            <div>
+              <FiUser />
+              <span>{post.data.author}</span>
+            </div>
 
-          <div>
-            <MdOutlineWatchLater />
-            <span>{readingTime} min</span>
+            <div>
+              <MdOutlineWatchLater />
+              <span>{readingTime} min</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <section>
-        {!!post &&
-          post.data.content.map((content, index) => (
-            <div key={String(index + content.heading)}>
-              <h2>{content.heading}</h2>
-              <div
-                dangerouslySetInnerHTML={{
-                  __html: RichText.asHtml(content.body),
-                }}
-              />
-            </div>
-          ))}
-      </section>
+        <section className={styles.content}>
+          {!!post &&
+            post.data.content.map(content => (
+              <div key={content.heading.toLowerCase().trim()}>
+                <h2>{content.heading}</h2>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: RichText.asHtml(content.body),
+                  }}
+                />
+              </div>
+            ))}
+        </section>
+      </div>
     </main>
   );
 }
