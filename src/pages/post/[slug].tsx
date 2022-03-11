@@ -6,11 +6,14 @@ import { FiCalendar, FiUser } from 'react-icons/fi';
 import { MdOutlineWatchLater } from 'react-icons/md';
 
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
+import Head from 'next/head';
 import { getPrismicClient } from '../../services/prismic';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
-import { formatDate } from '../../utils/formatDate';
 
 interface Post {
   first_publication_date: string | null;
@@ -34,6 +37,7 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps): JSX.Element {
+  const router = useRouter();
   const readingTime = Math.ceil(
     post.data.content.reduce((total, contentSection) => {
       const heading = String(contentSection.heading).split(' ');
@@ -45,51 +49,68 @@ export default function Post({ post }: PostProps): JSX.Element {
     }, 0) / 200
   );
 
+  if (router.isFallback) {
+    return <h1>Carregando...</h1>;
+  }
+
   return (
-    <main className={`${styles.container}`}>
-      <Image
-        src={post.data.banner.url}
-        alt="banner"
-        width="1440"
-        height="400"
-        layout="responsive"
-      />
-      <div className={styles.wrapper}>
-        <div className={styles.header}>
-          <h1>{post.data.title}</h1>
+    <>
+      <Head>
+        <title>{post.data.title} | Post</title>
+      </Head>
+      <main className={`${styles.container}`}>
+        <Image
+          src={post.data.banner.url}
+          alt="banner"
+          width="1440"
+          height="400"
+          layout="responsive"
+        />
+        <div className={commonStyles.container}>
+          <div className={styles.header}>
+            <h1>{post.data.title}</h1>
 
-          <div className={styles.footer}>
-            <div>
-              <FiCalendar />
-              <span>{post.first_publication_date}</span>
-            </div>
-            <div>
-              <FiUser />
-              <span>{post.data.author}</span>
-            </div>
+            <div className={styles.footer}>
+              <div>
+                <FiCalendar />
+                <span className={commonStyles.info}>
+                  {format(
+                    new Date(post.first_publication_date),
+                    'dd MMM yyyy',
+                    {
+                      locale: ptBR,
+                    }
+                  )}
+                </span>
+              </div>
+              <div>
+                <FiUser />
+                <span className={commonStyles.info}>{post.data.author}</span>
+              </div>
 
-            <div>
-              <MdOutlineWatchLater />
-              <span>{readingTime} min</span>
+              <div>
+                <MdOutlineWatchLater />
+                <span>{readingTime} min</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <section className={styles.content}>
-          {!!post &&
-            post.data.content.map(content => (
-              <div key={content.heading.toLowerCase().trim()}>
-                <h2>{content.heading}</h2>
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: RichText.asHtml(content.body),
-                  }}
-                />
-              </div>
-            ))}
-        </section>
-      </div>
-    </main>
+          <section className={styles.content}>
+            {!!post &&
+              post.data.content.map(content => (
+                <article key={content.heading.toLowerCase().trim()}>
+                  <h2>{content.heading}</h2>
+                  <main
+                    dangerouslySetInnerHTML={{
+                      __html: RichText.asHtml(content.body),
+                    }}
+                  />
+                </article>
+              ))}
+          </section>
+        </div>
+      </main>
+    </>
   );
 }
 
@@ -123,9 +144,8 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const response = await prismic.getByUID('posts', String(slug), {});
 
   const post = {
-    first_publication_date: formatDate(
-      new Date(response.first_publication_date)
-    ),
+    uid: response.uid,
+    first_publication_date: response.first_publication_date,
     data: {
       title: response.data.title,
       subtitle: response.data.subtitle,
@@ -134,7 +154,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         url: response.data.banner.url,
       },
       content: response.data.content.map(content => {
-        console.log(content);
         return {
           heading: content.heading,
           body: [...content.body],

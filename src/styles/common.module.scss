@@ -1,4 +1,3 @@
-// TODO
 .container {
   max-width: 720px;
   margin: 0 auto;
@@ -11,5 +10,9 @@
   h6 {
     color: var(--title);
     font-weight: bold;
+  }
+
+  .info {
+    text-transform: capitalize;
   }
 }
